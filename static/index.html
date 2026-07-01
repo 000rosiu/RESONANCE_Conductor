@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1fbf75">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RESONANCE Conductor">
+  <title>RESONANCE Conductor</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/styles.min.css">
+</head>
+<body>
+  <div id="watermark" class="watermark" aria-hidden="true"></div>
+
+  <main id="setupView" class="setup hidden">
+    <section class="setup-panel">
+      <p class="eyebrow">VIMLworks</p>
+      <h1>RESONANCE Conductor</h1>
+      <p class="lead" data-i18n="setupLead">First local AIMP connection setup.</p>
+      <form id="setupForm" class="setup-form">
+        <label><span data-i18n="language">Language</span>
+          <select name="language" class="language-select">
+            <option value="en">English</option>
+            <option value="pl">Polski</option>
+          </select>
+        </label>
+        <label><span data-i18n="connectionType">Connection type</span>
+          <select name="connection_type">
+            <option>AIMP (Direct HTTP API)</option>
+          </select>
+        </label>
+        <div class="form-grid">
+          <label><span data-i18n="aimpIp">AIMP server IP</span>
+            <input name="aimp_ip" value="127.0.0.1" autocomplete="off" required>
+          </label>
+          <label><span data-i18n="port">Port</span>
+            <input name="aimp_port" type="number" min="1" max="65535" value="19122" required>
+          </label>
+        </div>
+        <label><span data-i18n="teamName">Team name</span>
+          <input name="custom_management_name" value="Grupa Techniczna Audio" autocomplete="off">
+        </label>
+        <label><span data-i18n="logoPath">Local logo / watermark path</span>
+          <input name="custom_logo_url" data-i18n-placeholder="logoPlaceholder" placeholder="audio_drzewniak1.png or /static/logo.png" autocomplete="off">
+        </label>
+        <div class="form-grid">
+          <label><span data-i18n="accentColor">Accent color</span>
+            <input name="theme_color" type="color" value="#1fbf75">
+          </label>
+          <label><span data-i18n="defaultPlaylistId">Default playlist ID</span>
+            <input name="default_playlist_id" value="0" autocomplete="off">
+          </label>
+        </div>
+        <button type="submit" class="primary-action" data-i18n="saveAndStart">Save and start</button>
+        <p id="setupMessage" class="form-message" role="status"></p>
+      </form>
+    </section>
+  </main>
+
+  <main id="appView" class="app-shell hidden">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-line">
+          <h1>RESONANCE Conductor</h1>
+          <span id="managementName" class="management-name"></span>
+        </div>
+        <div class="connection-line">
+          <span id="statusDot" class="status-dot offline" aria-hidden="true"></span>
+          <span id="connectionText">AIMP: checking</span>
+        </div>
+      </div>
+      <div class="header-tools">
+        <label class="playlist-select-label"><span data-i18n="playlist">Playlist</span>
+          <select id="playlistSelect" class="playlist-select"></select>
+        </label>
+        <button id="settingsBtn" class="icon-button" type="button" data-i18n-title="settings" data-i18n-aria-label="settings" title="Settings" aria-label="Settings">⚙</button>
+        <button id="refreshPlaylistBtn" class="icon-button" type="button" data-i18n-title="refreshPlaylist" data-i18n-aria-label="refreshPlaylist" title="Refresh playlist" aria-label="Refresh playlist">↻</button>
+      </div>
+    </header>
+
+    <section class="now-playing" aria-live="polite">
+      <p class="section-label" data-i18n="nowPlaying">Now playing</p>
+      <div class="track-frame">
+        <div id="trackTitle" class="track-title">Waiting for AIMP</div>
+        <div id="trackArtist" class="track-artist"></div>
+      </div>
+    </section>
+
+    <section class="status-grid" aria-label="Status AIMP">
+      <article class="status-card">
+        <p data-i18n="focus">Focus</p>
+        <strong id="focusTitle">No data</strong>
+        <span id="focusMeta">-</span>
+      </article>
+      <article class="status-card accent-card">
+        <p data-i18n="nextInQueue">Next in queue</p>
+        <strong id="nextTitle">No data</strong>
+        <span id="nextMeta">-</span>
+      </article>
+      <article class="status-card">
+        <p data-i18n="loadedPlaylist">Loaded playlist</p>
+        <strong id="loadedPlaylistName">No data</strong>
+        <span id="loadedPlaylistMeta">-</span>
+      </article>
+    </section>
+
+    <section class="transport" aria-label="Kontrola odtwarzania">
+      <button id="prevNowBtn" class="control-button secondary" type="button"><span data-i18n="prevNow">PREV NOW</span></button>
+      <button id="playPauseBtn" class="control-button primary" type="button"><span>PLAY</span></button>
+      <button id="stopBtn" class="control-button danger" type="button"><span>STOP</span></button>
+      <button id="nextNowBtn" class="control-button secondary" type="button"><span data-i18n="nextNow">NEXT NOW</span></button>
+      <button id="muteBtn" class="control-button secondary" type="button"><span>MUTE</span></button>
+    </section>
+
+    <section class="focus-controls" data-i18n-aria-label="focusNavigation" aria-label="Focus navigation">
+      <button id="focusPrevBtn" class="mini-button" type="button">FOCUS PREV</button>
+      <button id="focusPlayBtn" class="mini-button strong" type="button" data-i18n="playFocus">PLAY FOCUS</button>
+      <button id="focusNextBtn" class="mini-button" type="button">FOCUS NEXT</button>
+    </section>
+
+    <section class="volume-panel">
+      <div class="volume-head">
+        <span data-i18n="volume">Volume</span>
+        <strong id="volumeValue">0%</strong>
+      </div>
+      <input id="volumeSlider" class="volume-slider" type="range" min="0" max="100" value="0">
+    </section>
+
+    <section class="playlist-panel">
+      <div class="playlist-head">
+        <h2 data-i18n="quickSelect">Quick select</h2>
+        <span id="playlistState" data-i18n="loading">Loading</span>
+      </div>
+      <div id="playlistGrid" class="playlist-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="queue-panel">
+      <div class="playlist-head">
+        <h2 data-i18n="queue">Queue</h2>
+        <span id="queueState" data-i18n="currentPlaylistOrder">Current playlist order</span>
+      </div>
+      <div id="queueList" class="queue-list" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <section class="modal-panel">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow" data-i18n="configuration">Configuration</p>
+          <h2 id="settingsTitle" data-i18n="systemSettings">System settings</h2>
+        </div>
+        <button id="closeSettingsBtn" class="icon-button" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="Close" aria-label="Close">×</button>
+      </div>
+      <form id="settingsForm" class="setup-form">
+        <label><span data-i18n="language">Language</span>
+          <select name="language" class="language-select">
+            <option value="en">English</option>
+            <option value="pl">Polski</option>
+          </select>
+        </label>
+        <label><span data-i18n="connectionType">Connection type</span>
+          <select name="connection_type">
+            <option>AIMP (Direct HTTP API)</option>
+          </select>
+        </label>
+        <div class="form-grid">
+          <label><span data-i18n="aimpIp">AIMP server IP</span>
+            <input name="aimp_ip" autocomplete="off" required>
+          </label>
+          <label><span data-i18n="port">Port</span>
+            <input name="aimp_port" type="number" min="1" max="65535" required>
+          </label>
+        </div>
+        <label><span data-i18n="teamName">Team name</span>
+          <input name="custom_management_name" autocomplete="off">
+        </label>
+        <label><span data-i18n="logoPath">Local logo / watermark path</span>
+          <input name="custom_logo_url" data-i18n-placeholder="logoPlaceholder" placeholder="audio_drzewniak1.png or /static/logo.png" autocomplete="off">
+        </label>
+        <div class="form-grid">
+          <label><span data-i18n="accentColor">Accent color</span>
+            <input name="theme_color" type="color">
+          </label>
+          <label><span data-i18n="defaultPlaylistId">Default playlist ID</span>
+            <input name="default_playlist_id" autocomplete="off">
+          </label>
+        </div>
+        <div class="settings-actions">
+          <button id="cancelSettingsBtn" class="mini-button" type="button" data-i18n="cancel">Cancel</button>
+          <button class="primary-action" type="submit" data-i18n="saveSettings">Save settings</button>
+        </div>
+        <p id="settingsMessage" class="form-message" role="status"></p>
+      </form>
+    </section>
+  </div>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
