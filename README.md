@@ -31,6 +31,7 @@ If `config.json` does not exist, the app displays a setup wizard. Default AIMP s
 - Port: `19122`
 - Type: `AIMP (Direct HTTP API)`
 
+
 After saving, the wizard creates `config.json`. The file can be edited manually afterward, e.g.:
 ```json
 {
@@ -43,3 +44,11 @@ After saving, the wizard creates `config.json`. The file can be edited manually 
   "default_playlist_id": "0"
 }
 ```
+
+## Screenshots:
+
+<img width="1866" height="922" alt="c1s1" src="https://github.com/user-attachments/assets/79a3c6b6-ba21-4206-822f-4fd8018fc9d4" />
+
+<img width="1866" height="1057" alt="c1s2" src="https://github.com/user-attachments/assets/50dace46-3bbb-46b8-852c-dd830eb84905" />
+
+
