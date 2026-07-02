@@ -1,8 +1,11 @@
+# VIMLworks RESONANCE Conductor
+
 from __future__ import annotations
 
 import json
 import os
 import platform
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -15,9 +18,45 @@ from pydantic import BaseModel, field_validator
 
 APP_FULL_NAME = "VIMLworks RESONANCE Conductor"
 APP_UI_NAME = "RESONANCE Conductor"
-BASE_DIR = Path(__file__).resolve().parent
+
+
+def is_frozen() -> bool:
+    """True gdy kod działa jako zbudowany exe (PyInstaller)."""
+    return bool(getattr(sys, "frozen", False))
+
+
+def get_resource_dir() -> Path:
+    """Katalog z zasobami tylko-do-odczytu (static/, ikonki).
+
+    W trybie frozen (onefile) PyInstaller rozpakowuje zasoby do
+    tymczasowego katalogu sys._MEIPASS - stamtąd trzeba je czytać.
+    W trybie zwykłego skryptu to po prostu katalog main.py.
+    """
+    if is_frozen():
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            return Path(meipass)
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+def get_app_dir() -> Path:
+    """Katalog do zapisu danych (config.json).
+
+    MUSI wskazywać na folder obok prawdziwego .exe, a nie na
+    tymczasowy folder rozpakowania (ten znika po zamknięciu programu).
+    W trybie skryptu to po prostu katalog main.py.
+    """
+    if is_frozen():
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+BASE_DIR = get_resource_dir()
+APP_DIR = get_app_dir()
 STATIC_DIR = BASE_DIR / "static"
-CONFIG_PATH = BASE_DIR / "config.json"
+CONFIG_PATH = APP_DIR / "config.json"
+
 DEFAULT_AIMP_PORT = 19122
 REQUEST_TIMEOUT = 2.5
 LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico"}
@@ -87,6 +126,7 @@ def read_config() -> AppConfig | None:
 
 def write_config(config: AppConfig) -> None:
     try:
+        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
         with CONFIG_PATH.open("w", encoding="utf-8") as handle:
             json.dump(config.model_dump(), handle, ensure_ascii=False, indent=2)
             handle.write("\n")
@@ -125,6 +165,8 @@ def resolve_logo_path(config: AppConfig) -> Path | None:
         raw_path = Path(raw_value)
         if raw_path.is_absolute():
             candidates.append(raw_path)
+        # sprawdz zarowno obok exe (APP_DIR), jak i w zasobach (BASE_DIR)
+        candidates.append(APP_DIR / raw_value)
         candidates.append(BASE_DIR / raw_value)
         candidates.append(STATIC_DIR / raw_value)
 
@@ -496,8 +538,19 @@ async def play_track(track_id: str, playlist_id: str = Query("current")) -> dict
 
 
 if __name__ == "__main__":
+    # freeze_support jest wymagany dla exe zbudowanych PyInstallerem na Windows
+    # (bezpieczne w wywolaniu nawet gdy nie uzywamy multiprocessing bezposrednio)
+    import multiprocessing
+
+    multiprocessing.freeze_support()
+
     clear_console()
     import uvicorn
 
     print(f"{APP_FULL_NAME} starting on http://0.0.0.0:5000")
-    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=False)
+    print(f"Config file: {CONFIG_PATH}")
+
+    # Przekazujemy obiekt app bezposrednio (nie string "main:app") -
+    # w zamrozonym exe import modulu po nazwie bywa zawodny, a reload
+    # i tak jest wylaczony wiec string-based loading nie jest potrzebny.
+    uvicorn.run(app, host="0.0.0.0", port=5000, reload=False)
