@@ -1,6 +1,6 @@
 # VIMLworks RESONANCE Conductor
 
-Local FastAPI middleware + PWA for controlling AIMP through its built-in HTTP server.
+Local FastAPI middleware + PWA for controlling media players like AIMP through its HTTP server.
 
 > **Note:** RESONANCE Conductor currently supports **AIMP only**. Support for additional connection types is planned for future releases.
 
