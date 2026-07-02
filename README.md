@@ -15,6 +15,7 @@ Windows:
 ```bat
 start.bat
 ```
+or use standalone .exe (from Releases)
 
 Linux:
 ```bash
